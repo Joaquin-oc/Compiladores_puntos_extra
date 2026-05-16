@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', monospace;
+  --color-surface: #0f172a;
+  --color-panel: #1e293b;
+  --color-accent: #38bdf8;
+  --color-success: #34d399;
+  --color-error: #f87171;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  color: #e2e8f0;
+  font-family: var(--font-sans);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.panel {
+  @apply rounded-xl border border-slate-700/60 bg-slate-900/70 backdrop-blur-sm shadow-lg;
+}
+
+.btn-primary {
+  @apply rounded-lg bg-sky-600 px-4 py-2 font-medium text-white transition hover:bg-sky-500 active:scale-[0.98];
+}
+
+.btn-ghost {
+  @apply rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800;
+}
+
+.tab-active {
+  @apply border-b-2 border-sky-400 text-sky-300;
+}
+
+.markdown-ai h2 { @apply text-lg font-semibold text-sky-300 mt-2 mb-1; }
+.markdown-ai h3 { @apply text-base font-medium text-slate-200 mt-2; }
+.markdown-ai p, .markdown-ai li { @apply text-sm text-slate-300 leading-relaxed; }
+.markdown-ai code { @apply rounded bg-slate-800 px-1 text-sky-200 font-mono text-xs; }

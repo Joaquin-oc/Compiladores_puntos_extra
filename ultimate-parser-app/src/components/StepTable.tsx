@@ -1,0 +1,73 @@
+import type { ParseStep } from '../core/types';
+
+interface Props {
+  steps: ParseStep[];
+  currentStep: number;
+  onStepChange: (n: number) => void;
+}
+
+export function StepTable({ steps, currentStep, onStepChange }: Props) {
+  return (
+    <div className="panel flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-700 px-4 py-2">
+        <h3 className="font-semibold text-slate-200">Simulación paso a paso</h3>
+        <div className="flex items-center gap-2">
+          <button type="button" className="btn-ghost" disabled={currentStep <= 0} onClick={() => onStepChange(0)}>
+            ⏮
+          </button>
+          <button type="button" className="btn-ghost" disabled={currentStep <= 0} onClick={() => onStepChange(currentStep - 1)}>
+            ◀
+          </button>
+          <span className="font-mono text-sm text-sky-300">
+            {currentStep} / {Math.max(0, steps.length - 1)}
+          </span>
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={currentStep >= steps.length - 1}
+            onClick={() => onStepChange(currentStep + 1)}
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={currentStep >= steps.length - 1}
+            onClick={() => onStepChange(steps.length - 1)}
+          >
+            ⏭
+          </button>
+        </div>
+      </div>
+      <div className="max-h-64 overflow-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="sticky top-0 bg-slate-800 text-xs uppercase text-slate-400">
+            <tr>
+              <th className="px-3 py-2">#</th>
+              <th className="px-3 py-2">Pila</th>
+              <th className="px-3 py-2">Entrada</th>
+              <th className="px-3 py-2">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {steps.map((s) => (
+              <tr
+                key={s.step}
+                className={`border-t border-slate-800 ${s.step === currentStep ? 'bg-sky-900/40' : ''}`}
+                onClick={() => onStepChange(s.step)}
+              >
+                <td className="px-3 py-1.5 font-mono text-slate-500">{s.step}</td>
+                <td className="max-w-[12rem] truncate px-3 py-1.5 font-mono text-xs">{s.stack}</td>
+                <td className="max-w-[10rem] truncate px-3 py-1.5 font-mono text-xs">{s.input}</td>
+                <td className="px-3 py-1.5">
+                  <span className="text-sky-300">{s.action}</span>
+                  <p className="text-xs text-slate-500">{s.detail}</p>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
