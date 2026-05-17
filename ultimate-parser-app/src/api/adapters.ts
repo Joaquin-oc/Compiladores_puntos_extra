@@ -35,7 +35,8 @@ export function adaptApiResponse<T>(raw: ApiResponse<T>): T {
 }
 
 function joinStack(stack: string[] | string): string {
-  return Array.isArray(stack) ? stack.join(' ') : String(stack);
+  if (!Array.isArray(stack)) return String(stack);
+  return stack.join(' ');
 }
 
 function joinInput(step: BackendStep): string {

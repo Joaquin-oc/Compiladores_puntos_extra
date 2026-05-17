@@ -70,6 +70,7 @@ class LL1Parser:
             step_n += 1
             top = stack[-1]
             current = input_tokens[index] if index < len(input_tokens) else END_MARKER
+            step_stack = list(stack)
 
             if top in self.grammar.terminals or top == END_MARKER:
                 if top == current:
@@ -82,7 +83,7 @@ class LL1Parser:
                             step_n,
                             "match",
                             f"Coincidir '{top}'",
-                            stack=list(stack),
+                            stack=step_stack,
                             input_remaining=input_tokens[index:],
                         )
                     )
@@ -99,7 +100,7 @@ class LL1Parser:
                             step_n,
                             "error",
                             f"Error: se esperaba '{top}', se encontró '{current}'",
-                            stack=list(stack),
+                            stack=step_stack,
                             input_remaining=input_tokens[index:],
                         )
                     )
@@ -118,7 +119,7 @@ class LL1Parser:
                             step_n,
                             "error",
                             f"Sin entrada en tabla M[{top}, {current}]",
-                            stack=list(stack),
+                            stack=step_stack,
                             input_remaining=input_tokens[index:],
                         )
                     )
@@ -138,7 +139,7 @@ class LL1Parser:
                         step_n,
                         "expand",
                         f"Aplicar {prod}",
-                        stack=list(stack),
+                        stack=step_stack,
                         input_remaining=input_tokens[index:],
                         extra={"production": str(prod)},
                     )

@@ -358,7 +358,21 @@ class LRParser:
             state = stack[-1]
             current = input_tokens[index]
             act = self.tables.action.get((state, current))
-            stack_repr = [str(s) for s in stack]
+            # produce an interleaved stack display: state symbol state ...
+            # node_stack holds the symbols (terminals/nonterminals) currently
+            # on the parser stack; states is `stack`. We build a compact
+            # representation like "0a2B4" by alternating state and symbol.
+            def build_stack_display(states: List[int], nodes: List[ParseNode]) -> str:
+                parts: List[str] = []
+                n = min(len(nodes), max(0, len(states) - 1))
+                for i in range(n):
+                    parts.append(str(states[i]))
+                    parts.append(nodes[i].symbol)
+                # append the final state
+                parts.append(str(states[n]))
+                return ''.join(parts)
+
+            stack_repr = build_stack_display(stack, node_stack)
             remaining = input_tokens[index:]
 
             if act is None:
@@ -385,8 +399,8 @@ class LRParser:
                         step_n,
                         "shift",
                         f"Desplazar '{current}' → estado {act.value}",
-                        stack_repr + [current, str(act.value)],
-                        remaining[1:],
+                        stack_repr,
+                        remaining,
                     )
                 )
                 node_stack.append(ParseNode(current, value=current))

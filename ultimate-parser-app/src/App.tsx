@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Brain, GitCompare, History, Play, Table2, TreePine } from 'lucide-react';
+import { BookOpen, GitCompare, History, Play, Table2, TreePine } from 'lucide-react';
 import type { ParserKind } from './core/types';
 import { parseGrammarText } from './core/grammar';
 import type { AnalysisOutput } from './core/runner';
 import { buildLL1Table } from './core/ll1';
-import { suggestAmbiguityFixes } from './ai/explanations';
-import {
-  checkHealth,
-  compareParsersFromApi,
-  explainErrorFromApi,
-  ll1SuggestionsFromApi,
-  runAnalysisFromApi,
-} from './api/client';
+import { compareParsersFromApi, runAnalysisFromApi } from './api/client';
 import { SAMPLE_GRAMMARS } from './data/samples';
 import { clearHistory, loadHistory, parserName, saveToHistory } from './utils/history';
-import { exportTableToPdf } from './utils/exportPdf';
-import { lrAutomatonToDot, parseTreeToDot } from './utils/graphviz';
+import { lrAutomatonToMermaid } from './utils/graphviz';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { StepTable } from './components/StepTable';
 
@@ -42,16 +34,10 @@ export default function App() {
   const [result, setResult] = useState<AnalysisOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const [compareData, setCompareData] = useState<Record<string, { accepted: boolean; error?: string | null; steps_count: number }> | null>(null);
-  const [aiText, setAiText] = useState('');
   const [ll1Meta, setLl1Meta] = useState<ReturnType<typeof buildLL1Table> | null>(null);
 
   const { grammar, errors } = useMemo(() => parseGrammarText(grammarText), [grammarText]);
-
-  useEffect(() => {
-    checkHealth().then(setBackendOk);
-  }, []);
 
   const runParse = useCallback(async () => {
     if (errors.length || !grammar.productions.length) return;
@@ -93,75 +79,26 @@ export default function App() {
       .catch(() => setCompareData(null));
   }, [tab, result, grammarText, inputText, parser, compareParser, errors]);
 
-  useEffect(() => {
-    if (tab !== 'ai' || !result) {
-      if (tab !== 'ai') return;
-      setAiText('Ejecute un análisis para obtener explicaciones inteligentes.');
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const last = result.steps[result.steps.length - 1];
-        const [explanation, tips] = await Promise.all([
-          explainErrorFromApi(
-            parser,
-            result.message,
-            grammarText,
-            last
-              ? {
-                  step: last.step,
-                  action: last.action,
-                  stack: last.stack.split(/\s+/).filter(Boolean),
-                  input_remaining: last.input.split(/\s+/).filter(Boolean),
-                  description: last.detail,
-                }
-              : undefined,
-          ),
-          ll1SuggestionsFromApi(grammarText),
-        ]);
-        if (cancelled) return;
-        const amb = suggestAmbiguityFixes(result.conflicts);
-        setAiText(
-          `${explanation}\n\n${tips.map((t) => `- ${t}`).join('\n')}\n\n${amb}`,
-        );
-      } catch {
-        if (!cancelled) setAiText('No se pudo cargar la explicación desde el servidor.');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [tab, result, parser, grammarText]);
 
-  const renderMermaid = async (dot: string) => {
+  const renderMermaid = useCallback(async (diagram: string) => {
     try {
       const mermaid = await import('mermaid');
       mermaid.default.initialize({ startOnLoad: false, theme: 'dark' });
-      const { svg } = await mermaid.default.render('graph-' + Date.now(), dot.replace(/digraph/g, 'graph').replace(/->/g, '-->'));
-      setMermaidSvg(svg);
+      const { svg } = await mermaid.default.render('graph-' + Date.now(), diagram);
+      if (svg.includes('Syntax error in text') || svg.includes('mermaid version')) {
+        setMermaidSvg('');
+      } else {
+        setMermaidSvg(svg);
+      }
     } catch {
-      setMermaidSvg('<p class="text-slate-400 p-4">Vista simplificada — copie el DOT para Graphviz externo.</p>');
+      setMermaidSvg('');
     }
-  };
+  }, []);
 
-  const actionTableRows = useMemo(() => {
-    if (!result?.lrTables) return [];
-    const rows: string[][] = [];
-    const states = new Set<number>();
-    const terms = new Set<string>();
-    result.lrTables.action.forEach((_, k) => {
-      const [s, t] = k.split(',');
-      states.add(Number(s));
-      terms.add(t);
-    });
-    const stArr = [...states].sort((a, b) => a - b);
-    const tArr = [...terms].sort();
-    for (const s of stArr) {
-      rows.push([String(s), ...tArr.map((t) => result.lrTables!.action.get(`${s},${t}`) ?? '')]);
-    }
-    return rows;
-  }, [result]);
+  useEffect(() => {
+    if (tab !== 'automaton' || !result?.lrTables) return;
+    void renderMermaid(lrAutomatonToMermaid(result.lrTables.states));
+  }, [tab, result, renderMermaid]);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -169,25 +106,10 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              The Ultimate Parser App
+              nombre de app q querramos 
             </h1>
-            <p className="text-sm text-slate-400">CS3402 Compiladores 2026-1 — Bonificación Examen 1</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full border px-3 py-1 text-xs ${
-                backendOk === null
-                  ? 'border-slate-600 text-slate-400'
-                  : backendOk
-                    ? 'border-emerald-600/50 bg-emerald-950/50 text-emerald-300'
-                    : 'border-red-600/50 bg-red-950/50 text-red-300'
-              }`}
-            >
-              {backendOk === null ? 'API…' : backendOk ? 'Backend conectado' : 'Backend sin conexión'}
-            </span>
-            <span className="rounded-full border border-sky-600/50 bg-sky-950/50 px-3 py-1 text-xs text-sky-300">
-              Desarrollado con asistencia de IA
-            </span>
+          <div className="flex flex-wrap items-center gap-2">   
           </div>
         </div>
       </header>
@@ -202,7 +124,7 @@ export default function App() {
               onChange={(e) => setGrammarText(e.target.value)}
               spellCheck={false}
             />
-            <label className="mb-1 mt-3 block text-xs font-medium uppercase text-slate-400">Cadena de entrada</label>
+            <label className="mb-1 mt-3 block text-xs font-medium uppercase text-slate-400">Cadena</label>
             <input
               className="w-full rounded-lg border border-slate-600 bg-slate-950 p-2 font-mono text-sm focus:border-sky-500 focus:outline-none"
               value={inputText}
@@ -293,7 +215,6 @@ export default function App() {
                 ['tables', 'Tablas', BookOpen],
                 ['automaton', 'Autómata', GitCompare],
                 ['tree', 'Árbol', TreePine],
-                ['ai', 'IA', Brain],
                 ['compare', 'Comparar', GitCompare],
                 ['history', 'Historial', History],
               ] as const
@@ -315,21 +236,13 @@ export default function App() {
 
           {tab === 'tables' && (
             <div className="panel overflow-auto p-4">
-              <div className="mb-3 flex justify-between">
-                <h3 className="font-semibold">Tablas de análisis</h3>
-                <button
-                  type="button"
-                  className="btn-ghost text-xs"
-                  onClick={() =>
-                    exportTableToPdf(
-                      `Tabla ${parserName(parser)}`,
-                      ['Estado', ...(actionTableRows[0]?.slice(1) ?? [])],
-                      actionTableRows,
-                    )
-                  }
-                >
-                  Exportar PDF
-                </button>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-semibold">Tablas de análisis</h3>
+                  <p className="text-xs text-slate-500">
+                    La tabla muestra cómo el parser decide cada paso. En LL(1) se ve la tabla predictiva M[NT, terminal]. En LR se ven las entradas ACTION y GOTO.
+                  </p>
+                </div>
               </div>
               {parser === 'll1' || parser === 'recursive-descent' ? (
                 <div className="overflow-x-auto">
@@ -394,23 +307,16 @@ export default function App() {
 
           {tab === 'automaton' && result?.lrTables && (
             <div className="panel p-4">
-              <div className="mb-2 flex gap-2">
-                <button
-                  type="button"
-                  className="btn-ghost text-xs"
-                  onClick={() => renderMermaid(lrAutomatonToDot(result.lrTables!.states))}
-                >
-                  Visualizar (Mermaid)
-                </button>
-                <button
-                  type="button"
-                  className="btn-ghost text-xs"
-                  onClick={() => navigator.clipboard.writeText(lrAutomatonToDot(result.lrTables!.states))}
-                >
-                  Copiar DOT (Graphviz)
-                </button>
-              </div>
-              <div dangerouslySetInnerHTML={{ __html: mermaidSvg }} />
+              <p className="mb-3 text-xs text-slate-400">
+                El autómata se genera automáticamente cuando hay tablas LR. Muestra los estados y transiciones del parser.
+              </p>
+              {mermaidSvg ? (
+                <div dangerouslySetInnerHTML={{ __html: mermaidSvg }} />
+              ) : (
+                <div className="rounded border border-slate-700 bg-slate-950 p-3 text-xs text-slate-400">
+                  Autómata no disponible para este estado. Si el parser falló, la tabla puede seguir existiendo, pero el gráfico no se genera.
+                </div>
+              )}
               <div className="mt-4 grid max-h-64 gap-2 overflow-auto sm:grid-cols-2">
                 {result.lrTables.states.map((st) => (
                   <div key={st.id} className="rounded border border-slate-700 bg-slate-950 p-2 text-xs">
@@ -429,16 +335,9 @@ export default function App() {
           {tab === 'tree' && (
             <div className="panel p-4">
               {result?.tree ? (
-                <>
+                <div className="overflow-auto max-h-[60vh] rounded border border-slate-700 bg-slate-950 p-3">
                   <TreeView node={result.tree} />
-                  <button
-                    type="button"
-                    className="btn-ghost mt-2 text-xs"
-                    onClick={() => navigator.clipboard.writeText(parseTreeToDot(result.tree))}
-                  >
-                    Exportar árbol DOT
-                  </button>
-                </>
+                </div>
               ) : (
                 <p className="text-slate-400">
                   Árbol de derivación / AST disponible con LL(1) y Descenso Recursivo.
@@ -451,12 +350,6 @@ export default function App() {
                   ) : null}
                 </p>
               )}
-            </div>
-          )}
-
-          {tab === 'ai' && (
-            <div className="panel markdown-ai max-h-[32rem] overflow-auto p-4 whitespace-pre-wrap text-sm">
-              {aiText || 'Ejecute un análisis para obtener explicaciones inteligentes.'}
             </div>
           )}
 
@@ -528,26 +421,28 @@ export default function App() {
           )}
         </div>
       </main>
-
-      <footer className="border-t border-slate-800 py-3 text-center text-xs text-slate-500">
-        The Ultimate Parser App · PWA · Graphviz DOT · Exportación PDF · IA pedagógica integrada
-      </footer>
     </div>
   );
 }
 
 function TreeView({ node }: { node: { symbol: string; children: typeof node[]; isTerminal: boolean } }) {
-  if (!node.children.length) {
-    return <span className="font-mono text-sky-300">{node.symbol}</span>;
+  const isLeaf = !node.children || node.children.length === 0;
+  if (isLeaf) {
+    return <div className="inline-block rounded px-2 py-0.5 text-xs font-mono text-sky-300 bg-slate-900">{node.symbol}</div>;
   }
   return (
-    <ul className="ml-4 list-none border-l border-slate-600 pl-3">
-      <li className="font-mono font-semibold text-white">{node.symbol}</li>
-      {node.children.map((c, i) => (
-        <li key={i} className="mt-1">
-          <TreeView node={c} />
-        </li>
-      ))}
-    </ul>
+    <div className="ml-2">
+      <div className="font-mono font-semibold text-white mb-1">{node.symbol}</div>
+      <div className="ml-4 space-y-2">
+        {node.children.map((c, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className="w-3 flex-shrink-0 mt-1 h-0.5 bg-slate-600" />
+            <div className="flex-1">
+              <TreeView node={c} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

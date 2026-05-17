@@ -48,10 +48,10 @@ export function parseLL1(
   let treeRoot: ParseTreeNode | null = null;
   const nodeStack: ParseTreeNode[] = [];
 
-  const pushStep = (action: string, detail: string) => {
+  const pushStep = (action: string, detail: string, stackSnapshot: Sym[] = [...stack]) => {
     steps.push({
       step: stepNum++,
-      stack: [...stack].reverse().join(' '),
+      stack: stackSnapshot.join(' '),
       input: tokens.slice(ip).join(' '),
       action,
       detail,
@@ -70,10 +70,11 @@ export function parseLL1(
           pushStep('aceptar', 'Entrada consumida completamente');
           return { success: true, steps, message: 'Cadena aceptada (LL(1))', tree: treeRoot ?? undefined, derivation };
         }
+        const beforeStack = [...stack];
         stack.pop();
         if (nodeStack.length) nodeStack.pop();
         ip++;
-        pushStep(`coincidir ${a}`, `Terminal ${a} coincide con entrada`);
+        pushStep(`coincidir ${a}`, `Terminal ${a} coincide con entrada`, beforeStack);
       } else {
         pushStep('error', `Se esperaba ${X} pero se encontró ${a}`);
         return { success: false, steps, message: `Error: esperado ${X}, encontrado ${a}`, derivation };
@@ -85,6 +86,7 @@ export function parseLL1(
         pushStep('error', `No hay entrada M[${X}, ${a}]`);
         return { success: false, steps, message: `Error LL(1): sin entrada para [${X}, ${a}]`, derivation };
       }
+      const beforeStack = [...stack];
       const prod = entry.prod;
       stack.pop();
       const node: ParseTreeNode = { symbol: X, children: [], isTerminal: false };
@@ -109,7 +111,7 @@ export function parseLL1(
       nodeStack.push(node);
       const derivLine = productionToString(prod);
       derivation.push(derivLine);
-      pushStep(`predecir`, `Aplicar ${derivLine}`);
+      pushStep(`predecir`, `Aplicar ${derivLine}`, beforeStack);
     }
   }
 

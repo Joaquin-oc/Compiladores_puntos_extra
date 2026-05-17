@@ -347,10 +347,15 @@ export function parseLR(grammar: Grammar, input: string, kind: LRKind, tables: L
   let ip = 0;
   let stepNum = 0;
 
+  const stackToString = (items: (number | Sym)[]) => {
+    const text = items.map(String);
+    return text.join(' ');
+  };
+
   const push = (action: string, detail: string) => {
     steps.push({
       step: stepNum++,
-      stack: stack.map(String).join(' '),
+      stack: stackToString(stack),
       input: inputSyms.slice(ip).join(' '),
       action,
       detail,

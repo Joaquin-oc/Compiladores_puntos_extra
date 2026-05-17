@@ -44,8 +44,8 @@ export function StepTable({ steps, currentStep, onStepChange }: Props) {
           <thead className="sticky top-0 bg-slate-800 text-xs uppercase text-slate-400">
             <tr>
               <th className="px-3 py-2">#</th>
-              <th className="px-3 py-2">Pila</th>
-              <th className="px-3 py-2">Entrada</th>
+              <th className="px-3 py-2">Pila (estado / símbolo / estado)</th>
+              <th className="px-3 py-2">Entrada restante</th>
               <th className="px-3 py-2">Acción</th>
             </tr>
           </thead>
@@ -57,11 +57,11 @@ export function StepTable({ steps, currentStep, onStepChange }: Props) {
                 onClick={() => onStepChange(s.step)}
               >
                 <td className="px-3 py-1.5 font-mono text-slate-500">{s.step}</td>
-                <td className="max-w-[12rem] truncate px-3 py-1.5 font-mono text-xs">{s.stack}</td>
-                <td className="max-w-[10rem] truncate px-3 py-1.5 font-mono text-xs">{s.input}</td>
+                <td className="px-3 py-1.5 font-mono text-xs whitespace-pre">{s.stack}</td>
+                <td className="px-3 py-1.5 font-mono text-xs whitespace-pre">{s.input}</td>
                 <td className="px-3 py-1.5">
-                  <span className="text-sky-300">{s.action}</span>
-                  <p className="text-xs text-slate-500">{s.detail}</p>
+                  <span className={`font-semibold ${s.action === 'error' ? 'text-rose-300' : 'text-sky-300'}`}>{s.action}</span>
+                  <p className={`text-xs ${s.action === 'error' ? 'text-rose-200' : 'text-slate-500'}`}>{s.detail}</p>
                 </td>
               </tr>
             ))}

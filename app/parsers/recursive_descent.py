@@ -28,6 +28,7 @@ class RecursiveDescentParser:
         self._pos = 0
         self._steps: List[ParseStep] = []
         self._step_num = 0
+        self._call_stack: List[str] = [self.grammar.start_symbol]
 
         try:
             tree = self._parse_nonterminal(self.grammar.start_symbol)
@@ -59,7 +60,7 @@ class RecursiveDescentParser:
                 self._step_num,
                 action,
                 desc,
-                stack=[self.grammar.start_symbol],
+                stack=[END_MARKER, *self._call_stack],
                 input_remaining=self._remaining(),
                 extra=extra,
             )
@@ -107,7 +108,9 @@ class RecursiveDescentParser:
                 self._record("match", f"Coincidir terminal '{sym}'", token=sym)
                 children.append(ParseNode(sym, value=tok))
             else:
+                self._call_stack.append(sym)
                 children.append(self._parse_nonterminal(sym))
+                self._call_stack.pop()
 
         if not chosen.rhs:
             return ParseNode(nt, children=[ParseNode(EPSILON, value=EPSILON)])

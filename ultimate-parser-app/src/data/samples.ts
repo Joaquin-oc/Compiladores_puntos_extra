@@ -11,12 +11,6 @@ F -> ( E ) | id`,
     grammar: `S -> ( S ) | ε`,
     input: '( ( ) )',
   },
-  ids: {
-    name: 'Lista de identificadores',
-    grammar: `L -> id L'
-L' -> , id L' | ε`,
-    input: 'id , id , id',
-  },
   if: {
     name: 'Estructura if-then-else',
     grammar: `S -> if E then S else S | other

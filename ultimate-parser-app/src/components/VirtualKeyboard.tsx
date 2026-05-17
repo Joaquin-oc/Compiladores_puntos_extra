@@ -3,10 +3,10 @@ interface Props {
 }
 
 const KEYS = [
-  ['ε', '→', '::=', '|', '$'],
+  ['ε', '→', '|', '$'],
   ['(', ')', "'", 'α', 'β'],
   ['+', '*', 'id', 'num', 'if'],
-  ['then', 'else', 'λ', '#', 'other'],
+  ['then', 'else', 'other'],
 ];
 
 export function VirtualKeyboard({ onInsert }: Props) {
