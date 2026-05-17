@@ -10,6 +10,7 @@ import { clearHistory, loadHistory, parserName, saveToHistory } from './utils/hi
 import { lrAutomatonToMermaid } from './utils/graphviz';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { StepTable } from './components/StepTable';
+import TreeView from './components/TreeView';
 
 const PARSERS: { id: ParserKind; label: string; group: string }[] = [
   { id: 'recursive-descent', label: 'Descenso Recursivo', group: 'Top-Down' },
@@ -37,6 +38,7 @@ export default function App() {
   const [showApiDetails, setShowApiDetails] = useState(false);
   const [compareData, setCompareData] = useState<Record<string, { accepted: boolean; error?: string | null; steps_count: number }> | null>(null);
   const [ll1Meta, setLl1Meta] = useState<ReturnType<typeof buildLL1Table> | null>(null);
+  const [selectedNt, setSelectedNt] = useState<string | null>(null);
 
   const { grammar, errors } = useMemo(() => parseGrammarText(grammarText), [grammarText]);
 
@@ -107,10 +109,10 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              nombre de app q querramos 
+              nombre de app q querramos
             </h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2">   
+          <div className="flex flex-wrap items-center gap-2">
           </div>
         </div>
       </header>
@@ -192,7 +194,7 @@ export default function App() {
                     type="button"
                     className="btn-ghost text-xs"
                     onClick={() => {
-                      void navigator.clipboard?.writeText(apiError).catch(() => {});
+                      void navigator.clipboard?.writeText(apiError).catch(() => { });
                     }}
                   >
                     Copiar
@@ -271,40 +273,78 @@ export default function App() {
                 </div>
               </div>
               {parser === 'll1' || parser === 'recursive-descent' ? (
-                <div className="overflow-x-auto">
-                  <h4 className="mb-2 text-sm text-slate-400">Tabla LL(1)</h4>
-                  <table className="text-sm">
-                    <thead>
-                      <tr className="text-slate-400">
-                        <th className="px-2 py-1">NT</th>
-                        <th className="px-2 py-1">Terminal</th>
-                        <th className="px-2 py-1">Producción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ll1Meta &&
-                        [...ll1Meta.table.entries()].map(([k, v]) => (
-                          <tr key={k} className="border-t border-slate-800">
-                            <td className="px-2 py-1 font-mono">{k.split(',')[0]}</td>
-                            <td className="px-2 py-1 font-mono">{k.split(',')[1]}</td>
-                            <td className="px-2 py-1 font-mono text-sky-300">
-                              {v.prod.lhs} → {v.prod.rhs.join(' ')}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                  <h4 className="mb-2 mt-4 text-sm text-slate-400">FIRST / FOLLOW</h4>
-                  <pre className="text-xs text-slate-300">
-                    {ll1Meta &&
-                      [...grammar.nonTerminals]
-                        .filter((n) => n !== grammar.augmentedStart)
-                        .map(
-                          (nt) =>
-                            `FIRST(${nt})={${[...(ll1Meta.first.get(nt) ?? [])].join(',')}}  FOLLOW(${nt})={${[...(ll1Meta.follow.get(nt) ?? [])].join(',')}}`,
-                        )
-                        .join('\n')}
-                  </pre>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="md:col-span-2 overflow-x-auto">
+                    <h4 className="mb-2 text-sm text-slate-400">Tabla LL(1)</h4>
+                    <table className="text-sm w-full">
+                      <thead>
+                        <tr className="text-slate-400">
+                          <th className="px-2 py-1">NT</th>
+                          <th className="px-2 py-1">Terminal</th>
+                          <th className="px-2 py-1">Producción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ll1Meta &&
+                          [...ll1Meta.table.entries()].map(([k, v]) => {
+                            const nt = k.split(',')[0];
+                            const term = k.split(',')[1];
+                            const isSelected = selectedNt === nt;
+                            return (
+                              <tr
+                                key={k}
+                                className={`border-t border-slate-800 ${isSelected ? 'bg-sky-900/20' : ''}`}
+                                onClick={() => setSelectedNt(nt)}
+                              >
+                                <td className="px-2 py-1 font-mono">{nt}</td>
+                                <td className="px-2 py-1 font-mono">{term}</td>
+                                <td className="px-2 py-1 font-mono text-sky-300">
+                                  {v.prod.lhs} → {v.prod.rhs.join(' ')}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                    <h4 className="mb-2 mt-4 text-sm text-slate-400">Selecciona un no terminal</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {ll1Meta && [...grammar.nonTerminals].filter((n) => n !== grammar.augmentedStart).map((nt) => (
+                        <button
+                          key={nt}
+                          type="button"
+                          onClick={() => setSelectedNt(nt)}
+                          className={`rounded px-2 py-1 text-xs ${selectedNt === nt ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                        >
+                          {nt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-1 rounded border border-slate-800 p-3 bg-slate-900">
+                    <h4 className="text-sm text-slate-300 mb-2">FIRST / FOLLOW</h4>
+                    {!selectedNt && <p className="text-xs text-slate-500">Selecciona un no terminal para ver FIRST y FOLLOW.</p>}
+                    {selectedNt && ll1Meta && (
+                      <div className="text-xs font-mono text-slate-200">
+                        <div className="mb-2">
+                          <div className="text-slate-400">FIRST({selectedNt})</div>
+                          <div className="mt-1">{[...(ll1Meta.first.get(selectedNt) ?? [])].join(', ') || '∅'}</div>
+                        </div>
+                        <div className="mb-2">
+                          <div className="text-slate-400">FOLLOW({selectedNt})</div>
+                          <div className="mt-1">{[...(ll1Meta.follow.get(selectedNt) ?? [])].join(', ') || '∅'}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-400">Producciones</div>
+                          <ul className="mt-1 list-disc list-inside text-slate-200">
+                            {[...grammar.productions].filter((p) => p.lhs === selectedNt).map((p, i) => (
+                              <li key={i} className="font-mono text-xs">{p.lhs} → {p.rhs.join(' ')}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : result?.lrTables ? (
                 <div>
@@ -451,24 +491,4 @@ export default function App() {
   );
 }
 
-function TreeView({ node }: { node: { symbol: string; children: typeof node[]; isTerminal: boolean } }) {
-  const isLeaf = !node.children || node.children.length === 0;
-  if (isLeaf) {
-    return <div className="inline-block rounded px-2 py-0.5 text-xs font-mono text-sky-300 bg-slate-900">{node.symbol}</div>;
-  }
-  return (
-    <div className="ml-2">
-      <div className="font-mono font-semibold text-white mb-1">{node.symbol}</div>
-      <div className="ml-4 space-y-2">
-        {node.children.map((c, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className="w-3 flex-shrink-0 mt-1 h-0.5 bg-slate-600" />
-            <div className="flex-1">
-              <TreeView node={c} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+
