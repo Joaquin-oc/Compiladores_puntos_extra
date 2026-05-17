@@ -22,8 +22,15 @@ export function VirtualKeyboard({ onInsert }: Props) {
               <button
                 key={k}
                 type="button"
-                onClick={() => onInsert(k === '→' ? ' -> ' : k === 'λ' ? 'ε' : ` ${k} `)}
-                className="min-w-[2rem] rounded-md border border-slate-600 bg-slate-800 px-2 py-1 font-mono text-sm text-sky-200 hover:border-sky-500 hover:bg-slate-700"
+                onClick={() => {
+                  // map special visual tokens to actual text inserted
+                  if (k === '→') return onInsert(' -> ');
+                  if (k === 'ε') return onInsert(' ε ');
+                  return onInsert(` ${k} `);
+                }}
+                title={k}
+                aria-label={`Insertar ${k}`}
+                className="min-w-[2rem] rounded-md border border-slate-600 bg-slate-800 px-2 py-1 font-mono text-sm text-sky-200 hover:border-sky-500 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
                 {k}
               </button>

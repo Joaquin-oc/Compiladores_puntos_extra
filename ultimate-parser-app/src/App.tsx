@@ -34,6 +34,7 @@ export default function App() {
   const [result, setResult] = useState<AnalysisOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showApiDetails, setShowApiDetails] = useState(false);
   const [compareData, setCompareData] = useState<Record<string, { accepted: boolean; error?: string | null; steps_count: number }> | null>(null);
   const [ll1Meta, setLl1Meta] = useState<ReturnType<typeof buildLL1Table> | null>(null);
 
@@ -181,8 +182,33 @@ export default function App() {
 
           {apiError && (
             <div className="rounded-lg border border-red-500/50 bg-red-950/30 p-3 text-sm text-red-300">
-              <p className="font-medium">Error de API</p>
-              <p className="mt-1 text-xs">{apiError}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Error de API</p>
+                  <p className="mt-1 text-xs">{apiError.split('\n')[0]}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost text-xs"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(apiError).catch(() => {});
+                    }}
+                  >
+                    Copiar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost text-xs"
+                    onClick={() => setShowApiDetails((s) => !s)}
+                  >
+                    {showApiDetails ? 'Ocultar' : 'Detalles'}
+                  </button>
+                </div>
+              </div>
+              {showApiDetails && (
+                <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded border border-slate-800 bg-slate-900 p-2 text-xs text-red-200">{apiError}</pre>
+              )}
               <p className="mt-2 text-xs opacity-80">Asegúrate de que el backend esté en http://127.0.0.1:8000</p>
             </div>
           )}
