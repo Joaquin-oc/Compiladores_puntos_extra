@@ -80,13 +80,6 @@ class Grammar:
 
 
 def parse_grammar_text(text: str, start_symbol: Optional[str] = None) -> Grammar:
-    """
-    Parsea gramática en formato:
-        S -> a S | b
-        E -> E + T | T
-    Símbolos: identificadores alfanuméricos o literales entre comillas.
-    ε, epsilon, e se interpretan como cadena vacía.
-    """
     productions: List[Production] = []
     first_lhs: Optional[str] = None
     line_re = re.compile(

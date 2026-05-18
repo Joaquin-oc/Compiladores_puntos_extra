@@ -110,7 +110,7 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              nombre de app q querramos
+              Ultimate parser app
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -432,14 +432,11 @@ export default function App() {
 
           {tab === 'automaton' && result?.lrTables && (
             <div className="panel p-4">
-              <p className="mb-3 text-xs text-slate-400">
-                El autómata se genera automáticamente cuando hay tablas LR. Muestra los estados y transiciones del parser.
-              </p>
               {mermaidSvg ? (
                 <div dangerouslySetInnerHTML={{ __html: mermaidSvg }} />
               ) : (
                 <div className="rounded border border-slate-700 bg-slate-950 p-3 text-xs text-slate-400">
-                  Autómata no disponible para este estado. Si el parser falló, la tabla puede seguir existiendo, pero el gráfico no se genera.
+                  Autómata no disponible para este estado.
                 </div>
               )}
               <div className="mt-4 grid max-h-64 gap-2 overflow-auto sm:grid-cols-2">

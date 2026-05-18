@@ -3,11 +3,11 @@
 @theme {
   --font-sans: 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Code', 'Fira Code', monospace;
-  --color-surface: #0f172a;
-  --color-panel: #1e293b;
-  --color-accent: #38bdf8;
-  --color-success: #34d399;
-  --color-error: #f87171;
+  --color-surface: #0b1323;
+  --color-panel: #161e34;
+  --color-accent: #c59b6f;
+  --color-success: #78b59a;
+  --color-error: #db8b7d;
 }
 
 html, body, #root {
@@ -16,8 +16,8 @@ html, body, #root {
 }
 
 body {
-  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-  color: #e2e8f0;
+  background: linear-gradient(160deg, #090f1d 0%, #151f37 48%, #0c1225 100%);
+  color: #dae4ef;
   font-family: var(--font-sans);
 }
 
@@ -26,27 +26,72 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: rgba(133, 146, 165, 0.55);
   border-radius: 4px;
 }
 
 .panel {
-  @apply rounded-xl border border-slate-700/60 bg-slate-900/70 backdrop-blur-sm shadow-lg;
+  @apply rounded-xl border border-slate-700/50 bg-slate-950/70 backdrop-blur-sm shadow-[0_24px_60px_-32px_rgba(15,23,42,0.9)];
 }
 
 .btn-primary {
-  @apply rounded-lg bg-sky-600 px-4 py-2 font-medium text-white transition hover:bg-sky-500 active:scale-[0.98];
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #b27a51 0%, #d4a272 100%);
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: #f8f1e8;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
 .btn-ghost {
-  @apply rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #d8dae3;
+  transition: background-color 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .tab-active {
-  @apply border-b-2 border-sky-400 text-sky-300;
+  border-bottom: 2px solid #c5a072;
+  color: #f5e8d6;
 }
 
-.markdown-ai h2 { @apply text-lg font-semibold text-sky-300 mt-2 mb-1; }
-.markdown-ai h3 { @apply text-base font-medium text-slate-200 mt-2; }
-.markdown-ai p, .markdown-ai li { @apply text-sm text-slate-300 leading-relaxed; }
-.markdown-ai code { @apply rounded bg-slate-800 px-1 text-sky-200 font-mono text-xs; }
+.markdown-ai h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #c39d72;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.markdown-ai h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #d8d4ce;
+  margin-top: 0.5rem;
+}
+.markdown-ai p, .markdown-ai li {
+  font-size: 0.875rem;
+  color: #cbd4e0;
+  line-height: 1.65;
+}
+.markdown-ai code {
+  border-radius: 0.375rem;
+  background: #161f34;
+  padding: 0.125rem 0.25rem;
+  color: #d8b68f;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}

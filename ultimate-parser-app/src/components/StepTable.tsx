@@ -62,7 +62,7 @@ export function StepTable({ steps, currentStep, onStepChange }: Props) {
           <thead className="sticky top-0 bg-slate-800 text-xs uppercase text-slate-400">
             <tr>
               <th className="px-3 py-2">#</th>
-              <th className="px-3 py-2">Pila (estado / símbolo / estado)</th>
+              <th className="px-3 py-2">Pila </th>
               <th className="px-3 py-2">Entrada restante</th>
               <th className="px-3 py-2">Acción</th>
             </tr>
