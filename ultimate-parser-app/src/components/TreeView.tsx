@@ -4,38 +4,36 @@ type Node = { symbol: string; children?: Node[]; isTerminal?: boolean };
 
 export default function TreeView({ node }: { node: Node }) {
     const [open, setOpen] = useState(true);
-
     const isLeaf = !node.children || node.children.length === 0;
 
+    const nodeLabel = (
+        <div className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-mono ${isLeaf ? 'bg-slate-900 text-sky-300' : 'bg-slate-950 text-slate-100 ring-1 ring-slate-700'}`}>
+            {node.symbol}
+        </div>
+    );
+
     if (isLeaf) {
-        return (
-            <div className="inline-block rounded px-2 py-0.5 text-xs font-mono text-sky-300 bg-slate-900">
-                {node.symbol}
-            </div>
-        );
+        return nodeLabel;
     }
 
     return (
-        <div className="ml-2">
+        <div className="mt-2">
             <div className="flex items-center gap-2">
                 <button
                     type="button"
                     aria-expanded={open}
                     onClick={() => setOpen((s) => !s)}
-                    className="text-xs btn-ghost"
+                    className="text-xs btn-ghost py-0.5 px-2"
                 >
                     {open ? '▾' : '▸'}
                 </button>
-                <div className="font-mono font-semibold text-white mb-1">{node.symbol}</div>
+                {nodeLabel}
             </div>
             {open && (
-                <div className="ml-4 space-y-2">
+                <div className="ml-5 mt-2 space-y-2 border-l border-slate-700/70 pl-4">
                     {node.children!.map((c, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                            <div className="w-3 flex-shrink-0 mt-1 h-0.5 bg-slate-600" />
-                            <div className="flex-1">
-                                <TreeView node={c} />
-                            </div>
+                        <div key={i}>
+                            <TreeView node={c} />
                         </div>
                     ))}
                 </div>
