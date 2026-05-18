@@ -8,6 +8,7 @@ import { compareParsersFromApi, runAnalysisFromApi } from './api/client';
 import { SAMPLE_GRAMMARS } from './data/samples';
 import { clearHistory, loadHistory, parserName, saveToHistory } from './utils/history';
 import { lrAutomatonToMermaid } from './utils/graphviz';
+import { exportTableToPdf, exportMultipleTablesToPdf } from './utils/exportPdf';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { StepTable } from './components/StepTable';
 import TreeView from './components/TreeView';
@@ -271,6 +272,37 @@ export default function App() {
                     La tabla muestra cómo el parser decide cada paso. En LL(1) se ve la tabla predictiva M[NT, terminal]. En LR se ven las entradas ACTION y GOTO.
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => {
+                      if ((parser === 'll1' || parser === 'recursive-descent') && ll1Meta) {
+                        const headers = ['NT', 'Terminal', 'Producción'];
+                        const rows = [...ll1Meta.table.entries()].map(([k, v]) => {
+                          const nt = k.split(',')[0];
+                          const term = k.split(',')[1];
+                          return [nt, term, `${v.prod.lhs} → ${v.prod.rhs.join(' ')}`];
+                        });
+                        exportTableToPdf('Tabla LL(1)', headers, rows, 'tabla-ll1.pdf');
+                        return;
+                      }
+                      if (result?.lrTables) {
+                        const headers = ['Clave', 'Valor'];
+                        const actionRows = [...result.lrTables.action.entries()].map(([k, v]) => [k, String(v)]);
+                        const gotoRows = [...result.lrTables.goto.entries()].map(([k, v]) => [k, String(v)]);
+                        exportMultipleTablesToPdf('LR - Tablas', [
+                          { title: 'ACTION', headers, rows: actionRows },
+                          { title: 'GOTO', headers, rows: gotoRows },
+                        ], 'lr-tables.pdf');
+                        return;
+                      }
+                      // fallback: export nothing
+                    }}
+                  >
+                    {['lr0', 'slr1', 'lalr1', 'lr1'].includes(parser) ? '📄 Exportar ACTION+GOTO' : '📄 Exportar PDF'}
+                  </button>
+                </div>
               </div>
               {parser === 'll1' || parser === 'recursive-descent' ? (
                 <div className="grid gap-4 md:grid-cols-3">
@@ -347,22 +379,49 @@ export default function App() {
                   </div>
                 </div>
               ) : result?.lrTables ? (
-                <div>
-                  <h4 className="mb-2 text-sm text-slate-400">ACTION (muestra)</h4>
-                  <div className="max-h-96 overflow-auto font-mono text-xs">
-                    {[...result.lrTables.action.entries()].slice(0, 120).map(([k, v]) => (
-                      <div key={k} className="border-b border-slate-800 py-0.5">
-                        [{k}] = {v}
-                      </div>
-                    ))}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="overflow-auto rounded border border-slate-800 bg-slate-950 p-3">
+                    <h4 className="mb-2 text-sm text-slate-400">ACTION</h4>
+                    <div className="max-h-96 overflow-auto">
+                      <table className="w-full text-left text-xs font-mono">
+                        <thead className="text-slate-400 text-[11px]">
+                          <tr>
+                            <th className="px-2 py-1">Clave</th>
+                            <th className="px-2 py-1">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...result.lrTables.action.entries()].slice(0, 100).map(([k, v]) => (
+                            <tr key={k} className="border-t border-slate-800 hover:bg-slate-800/30">
+                              <td className="px-2 py-1 align-top">{k}</td>
+                              <td className="px-2 py-1 break-words">{String(v)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <h4 className="mb-2 mt-4 text-sm text-slate-400">GOTO</h4>
-                  <div className="font-mono text-xs">
-                    {[...result.lrTables.goto.entries()].map(([k, v]) => (
-                      <div key={k} className="border-b border-slate-800 py-0.5">
-                        [{k}] = {v}
-                      </div>
-                    ))}
+
+                  <div className="overflow-auto rounded border border-slate-800 bg-slate-950 p-3">
+                    <h4 className="mb-2 text-sm text-slate-400">GOTO</h4>
+                    <div className="max-h-96 overflow-auto">
+                      <table className="w-full text-left text-xs font-mono">
+                        <thead className="text-slate-400 text-[11px]">
+                          <tr>
+                            <th className="px-2 py-1">Clave</th>
+                            <th className="px-2 py-1">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...result.lrTables.goto.entries()].map(([k, v]) => (
+                            <tr key={k} className="border-t border-slate-800 hover:bg-slate-800/30">
+                              <td className="px-2 py-1 align-top">{k}</td>
+                              <td className="px-2 py-1 break-words">{String(v)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               ) : (

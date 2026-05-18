@@ -1,5 +1,5 @@
-import React from 'react';
 import type { ParseStep } from '../core/types';
+import { exportTableToPdf } from '../utils/exportPdf';
 
 interface Props {
   steps: ParseStep[];
@@ -14,6 +14,22 @@ export function StepTable({ steps, currentStep, onStepChange }: Props) {
       <div className="flex items-center justify-between border-b border-slate-700 px-4 py-2">
         <h3 className="font-semibold text-slate-200">Simulación paso a paso</h3>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              const headers = ['#', 'Pila (estado / símbolo / estado)', 'Entrada restante', 'Acción'];
+              const rows = steps.map((s) => [
+                String(s.step),
+                String(s.stack),
+                String(s.input),
+                `${s.action}${s.detail ? ' - ' + s.detail : ''}`,
+              ]);
+              exportTableToPdf('Simulación paso a paso', headers, rows, 'simulacion-paso-a-paso.pdf');
+            }}
+          >
+            📄 Exportar PDF
+          </button>
           <button type="button" className="btn-ghost" disabled={currentStep <= 0} onClick={() => onStepChange(0)}>
             ⏮
           </button>
